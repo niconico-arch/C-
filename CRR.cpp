@@ -48,6 +48,7 @@ int CRRBinomialTree(
 	double* p = new double();
 	int* iter = new int(0);  
 	double* old_payoff = new double[nStep];
+	double* stockPrice = new double[nStep];
 
 	deltaT = maturity/nStep;
 	discount = exp(-rate*deltaT);
@@ -55,11 +56,38 @@ int CRRBinomialTree(
 	d = 1/u;
 	p = (exp(rate*deltaT)-d)/(u-d);
 
+	for(iter = 0; iter < nStep; iter++)
+	{
+		stockPrice[iter] = spotPrice * power(u, nStep-iter)*power(d, iter);
+		old_payoff[iter] = CPPayoffCalc(stockPrice[iter], strike, CALL_PUT);
+	}
+
 	for(iter = nStep; iter > 0; iter--)
 	{
 		double* new_payoff = new double[iter];
 		new_payoff[iter] = discount*(p*old_payoff[iter]+(1-p)*old_payoff[iter+1])
+		if(AMER_EURO == "American")
+		{
+			new_payoff[iter] = max()
+        }
 		old_payoff = new_payoff;
+		delete[] new_payoff;
     }
 	return SUCCESS;
+}
+
+int CPPayoffCalc(stockPrice, strike, call_put)
+{
+	if(call_put=="Call")
+	{
+		return max(stockPrice - strike, 0);
+    }
+	else if(call_put=="Put")
+	{
+		return max(strike - stockPrice, 0);
+    }
+	else
+	{
+		return FAILURE;
+    }
 }
