@@ -4,6 +4,22 @@
 
 using namespace std;
 
+double CPPayoffCalc(double stockPrice, double strike, CALL_PUT call_put)
+{
+	if (call_put == Call)
+	{
+		return fmax(stockPrice - strike, 0);
+	}
+	else if (call_put == Put)
+	{
+		return fmax(strike - stockPrice, 0);
+	}
+	else
+	{
+		return FAILURE;
+	}
+}
+
 int CRRBinomialTree(
 	CALL_PUT	callOrPut,				/* (I) put or call flag (use Call or Put) */
 	AMER_EURO	amerOrEuro,				/* (I) option type (use European, American) */
@@ -41,54 +57,63 @@ int CRRBinomialTree(
 
 	*value = 0.0;
 
-	double* deltaT = new double();
-	double* discount = new double();
-	double* u = new double();
-	double* d = new double();
-	double* p = new double();
-	int* iter = new int(0);
-	double* old_payoff = new double[nStep];
-	double* stockPrice = new double[nStep];
+	double *deltaT = new double();
+	double *discount = new double();
+	double *u = new double();
+	double *d = new double();
+	double *p = new double();
+	double *payoff = new double[nStep];
+	double *stockPrice = new double[nStep*2];
 
 	*deltaT = maturity / nStep;
 	*discount = exp(-rate * *deltaT);
-	*u = exp(vol * pow(*deltaT, 2));
+	*u = exp(vol * sqrt(*deltaT));
 	*d = 1 / *u;
 	*p = (exp(rate * *deltaT) - *d) / (*u - *d);
 
-	for (*iter = 0; *iter < nStep; *iter++)
+	for (int iter = 0; iter < nStep; iter++)
 	{
-		stockPrice[*iter*2] = spotPrice * pow(*u, nStep - 1 - *iter) * pow(*d, *iter);
-		stockPrice[*iter * 2 + 1] = spotPrice * pow(*u, nStep - 2 - *iter) * pow(*d, *iter);
-		old_payoff[*iter] = CPPayoffCalc(stockPrice[*iter], strike, callOrPut);
+		stockPrice[iter*2] = spotPrice * pow(*u, nStep - iter) * pow(*d, iter);
+		stockPrice[iter * 2 + 1] = spotPrice * pow(*u, nStep - 1 - iter) * pow(*d, iter);
+		payoff[iter] = CPPayoffCalc(stockPrice[iter*2], strike, callOrPut);
 	}
 
-	for (*iter = nStep; *iter > 0; iter--)
+	for (int step = nStep; step > 0; step--)
 	{
-		double* new_payoff = new double[*iter];
-		new_payoff[*iter] = *discount * (*p * old_payoff[*iter] + (1 - *p) * old_payoff[*iter + 1]);
-			if(amerOrEuro == American)
+		for (int iter = 0; iter < step; iter++)
+		{
+			payoff[iter] = *discount * (*p * payoff[iter] + (1 - *p) * payoff[iter + 1]);
+			if (amerOrEuro == American)
 			{
-				new_payoff[*iter] = fmax();
+				if (callOrPut == Call)
+				{
+					payoff[iter] = fmax(payoff[iter], stockPrice[nStep - step + 1 + iter * 2] - spotPrice);
+				}
+				else if (callOrPut == Put)
+				{
+					payoff[iter] = fmax(payoff[iter], spotPrice - stockPrice[nStep - step + 1 + iter * 2]);
+				}
 			}
-		old_payoff = new_payoff;
-		delete[] new_payoff;
+		}
 	}
+	*value = payoff[0];
+	delete deltaT;
+	delete discount;
+	delete u;
+	delete d;
+	delete p;
+	delete[] payoff;
+	delete[] stockPrice;
 	return SUCCESS;
 }
 
-int CPPayoffCalc(double stockPrice, double strike, CALL_PUT call_put)
+int main()
 {
-	if (call_put == Call)
-	{
-		return fmax(stockPrice - strike, 0);
-	}
-	else if (call_put == Put)
-	{
-		return fmax(strike - stockPrice, 0);
-	}
-	else
-	{
-		return FAILURE;
-	}
+	AMER_EURO A_E;
+	CALL_PUT C_P;
+	double spotPrice, strikePrice, maturity, vol, rate, crr;
+	int nStep, err;
+	A_E = European; C_P = Call;	spotPrice = 100.0; strikePrice = 100.0; maturity = 1; vol = 0.2; rate = 0.05; nStep = 10;
+	CRRBinomialTree(C_P, A_E, spotPrice, strikePrice, maturity, vol, rate, nStep, &crr);
+	return 0;
 }
