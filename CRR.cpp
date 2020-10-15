@@ -29,8 +29,8 @@ int CRRBinomialTree(
 	{
 		cout << "CRRBinomialTree: Negative number of steps." << endl;
 		return FAILURE;
-	}            
-	
+	}
+
 	if (spotPrice <= 0.0 || strike <= 0.0 || maturity < 0.0 || vol < 0.0 || rate < 0.0)
 	{
 		cout << "CRRBinomialTree: Invalid input detected." << endl;
@@ -38,7 +38,7 @@ int CRRBinomialTree(
 	}
 
 	// TO-BE-COMPLETED
-	
+
 	*value = 0.0;
 
 	double* deltaT = new double();
@@ -46,48 +46,49 @@ int CRRBinomialTree(
 	double* u = new double();
 	double* d = new double();
 	double* p = new double();
-	int* iter = new int(0);  
+	int* iter = new int(0);
 	double* old_payoff = new double[nStep];
 	double* stockPrice = new double[nStep];
 
-	deltaT = maturity/nStep;
-	discount = exp(-rate*deltaT);
-	u = exp(vol*pow(deltaT,2));
-	d = 1/u;
-	p = (exp(rate*deltaT)-d)/(u-d);
+	*deltaT = maturity / nStep;
+	*discount = exp(-rate * *deltaT);
+	*u = exp(vol * pow(*deltaT, 2));
+	*d = 1 / *u;
+	*p = (exp(rate * *deltaT) - *d) / (*u - *d);
 
-	for(iter = 0; iter < nStep; iter++)
+	for (*iter = 0; *iter < nStep; *iter++)
 	{
-		stockPrice[iter] = spotPrice * power(u, nStep-iter)*power(d, iter);
-		old_payoff[iter] = CPPayoffCalc(stockPrice[iter], strike, CALL_PUT);
+		stockPrice[*iter*2] = spotPrice * pow(*u, nStep - 1 - *iter) * pow(*d, *iter);
+		stockPrice[*iter * 2 + 1] = spotPrice * pow(*u, nStep - 2 - *iter) * pow(*d, *iter);
+		old_payoff[*iter] = CPPayoffCalc(stockPrice[*iter], strike, callOrPut);
 	}
 
-	for(iter = nStep; iter > 0; iter--)
+	for (*iter = nStep; *iter > 0; iter--)
 	{
-		double* new_payoff = new double[iter];
-		new_payoff[iter] = discount*(p*old_payoff[iter]+(1-p)*old_payoff[iter+1])
-		if(AMER_EURO == "American")
-		{
-			new_payoff[iter] = max()
-        }
+		double* new_payoff = new double[*iter];
+		new_payoff[*iter] = *discount * (*p * old_payoff[*iter] + (1 - *p) * old_payoff[*iter + 1]);
+			if(amerOrEuro == American)
+			{
+				new_payoff[*iter] = fmax();
+			}
 		old_payoff = new_payoff;
 		delete[] new_payoff;
-    }
+	}
 	return SUCCESS;
 }
 
-int CPPayoffCalc(stockPrice, strike, call_put)
+int CPPayoffCalc(double stockPrice, double strike, CALL_PUT call_put)
 {
-	if(call_put=="Call")
+	if (call_put == Call)
 	{
-		return max(stockPrice - strike, 0);
-    }
-	else if(call_put=="Put")
+		return fmax(stockPrice - strike, 0);
+	}
+	else if (call_put == Put)
 	{
-		return max(strike - stockPrice, 0);
-    }
+		return fmax(strike - stockPrice, 0);
+	}
 	else
 	{
 		return FAILURE;
-    }
+	}
 }
