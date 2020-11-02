@@ -63,15 +63,18 @@ double PolarRej::generate()
 **              the next call.
 **--------------------------------------------------------------------------*/
 {
+	// declare variables for calculation purpose. For variables to be saved, declare as static variable.
 	double v1, v2, w, n1;
 	static double n2;
 	static int use_last = 0;
 
+	// if the second random number is not used yet, set the return number to be the second number generated in the last run and set use_last as False
 	if (use_last)
 	{
 		n1 = n2;
 		use_last = 0;
 	}
+	// generate two random numbers following Polar rejection method for Box-Muller transformation
 	else
 	{
 		do {
@@ -101,8 +104,31 @@ double SinCos::generate()
 **              the next call.
 **---------------------------------------------------------------------------*/
 {
-	// TODO
-	return 0.0;
+	// declare variables for calculation purpose. For variables to be saved, declare as static variable.
+	double u1, u2, pi, theta, r, n1;
+	static double n2;
+	static int use_last = 0;
+
+	// if the second random number is not used yet, set the return number to be the second number generated in the last run and set use_last as False
+	if (use_last)
+	{
+		n1 = n2;
+		use_last = 0;
+	}
+	// generate two random numbers following sin/cos method for Box-Muller transformation
+	else
+	{
+		u1 = uniform();
+		u2 = uniform();
+		pi = 2 * acos(0.0);
+		theta = 1.0 * pi * u1;
+		r = sqrt(-2.0 * log(u2));
+		n1 = r * cos(theta);
+		n2 = r * sin(theta);
+		use_last = 1;
+	}
+
+	return(n1);
 }
 
 double Uniform::generate()
