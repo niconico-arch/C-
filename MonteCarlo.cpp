@@ -22,16 +22,11 @@ double MonteCarlo1Asset::simulate()
 ** RETURNS:		Next value.
 **---------------------------------------------------------------------------*/
 {
-	double normalBM, deltaT;
-	//spotT1 = 0.0;
 	// random normal variable generated with Box Muller
-	normalBM = normalPR();
-	//spotT = getSpotVal();
-	// calculate deltaT for given step
-	deltaT = m_dt / 365;
-	//spotT1 = spotT * exp(deltaT * (getIr() - 0.5 * getVol() * getVol()) +normalBM * getVol() * sqrt(deltaT));
+	double epsilon = normalPR();
+
 	// calculate the next step value with monte carlo
-	m_spotVal = m_spotVal * exp(deltaT * (m_ir - 0.5 * m_vol * m_vol) + normalBM * m_vol * sqrt(deltaT));
+	m_spotVal *= exp((m_ir - m_div - 0.5 * m_vol * m_vol)* m_dt +  m_vol * epsilon * sqrt(m_dt));
 	return m_spotVal;
 }
 
